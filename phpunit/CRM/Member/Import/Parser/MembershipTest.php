@@ -31,6 +31,7 @@
  * @group headless
  */
 class CRM_Member_Import_Parser_MembershipTest extends CiviUnitTestCase {
+  use CRMTraits_Custom_CustomDataTrait;
   /**
    * Membership type name used in test function.
    *
@@ -308,6 +309,42 @@ class CRM_Member_Import_Parser_MembershipTest extends CiviUnitTestCase {
         'label' => 'New',
       ],
     ]);
+  }
+
+  /**
+   * Test that values are stored after importing custom data.
+   *
+   * @throws \CRM_Core_Exception
+   */
+  public function testCustomDataValue() {
+    $groupParams = [
+      'extends' => ['Membership'],
+    ];
+    $this->createCustomGroupWithFieldOfType($groupParams, 'select_numeric');
+
+    $this->individualCreate(['email' => 'anthony_anderson2@civicrm.org']);
+
+    $fieldMapper = [
+      'mapper[0][0]' => 'email',
+      'mapper[1][0]' => 'membership_type_id',
+      'mapper[2][0]' => 'membership_start_date',
+      'mapper[3][0]' => $this->getCustomFieldName('select_numeric'),
+    ];
+    $membershipImporter = new CRM_Member_Import_Parser_Membership($fieldMapper);
+    $membershipImporter->init();
+    $membershipImporter->_contactType = 'Individual';
+
+    $importValues = [
+      'anthony_anderson2@civicrm.org',
+      $this->_membershipTypeID,
+      date('Y-m-d'),
+      'Three',
+    ];
+
+    $importResponse = $membershipImporter->import(CRM_Import_Parser::DUPLICATE_UPDATE, $importValues);
+    $this->assertEquals(CRM_Import_Parser::VALID, $importResponse);
+    $membershipFieldValue = $this->callAPISuccessGetValue('Membership', ['return' => $this->getCustomFieldName('select_numeric')]);
+    $this->assertEquals(3, $membershipFieldValue);
   }
 
   /**

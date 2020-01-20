@@ -80,7 +80,7 @@ trait CRMTraits_Custom_CustomDataTrait {
    * @throws \CRM_Core_Exception
    */
   public function createCustomGroupWithFieldOfType($groupParams = [], $customFieldType = 'text', $identifier = NULL) {
-    $supported = ['text', 'select', 'date', 'int'];
+    $supported = ['text', 'select', 'select_numeric', 'date', 'int'];
     if (!in_array($customFieldType, $supported, TRUE)) {
       throw new CRM_Core_Exception('we have not yet extracted other custom field types from createCustomFieldsOfAllTypes, Use consistent syntax when you do');
     }
@@ -94,6 +94,10 @@ trait CRMTraits_Custom_CustomDataTrait {
 
       case 'select':
         $customField = $this->createSelectCustomField(['custom_group_id' => $this->ids['CustomGroup'][$groupParams['name']]]);
+        break;
+
+      case 'select_numeric':
+        $customField = $this->createSelectNumericCustomField(['custom_group_id' => $this->ids['CustomGroup'][$groupParams['name']]]);
         break;
 
       case 'int':
@@ -274,6 +278,51 @@ trait CRMTraits_Custom_CustomDataTrait {
     $params = array_merge([
       'label' => 'Pick Color',
       'html_type' => 'Select',
+      'data_type' => 'String',
+      'weight' => 2,
+      'is_required' => 1,
+      'is_searchable' => 0,
+      'is_active' => 1,
+      'option_values' => $optionValue,
+    ], $params);
+
+    $customField = $this->callAPISuccess('custom_field', 'create', $params);
+    return $customField['values'][$customField['id']];
+  }
+
+  /**
+   * Create custom select field.
+   *
+   * @param array $params
+   *   Parameter overrides, must include custom_group_id.
+   *
+   * @return array
+   */
+  protected function createSelectNumericCustomField(array $params): array {
+    $optionValue = [
+      [
+        'label' => 'One',
+        'value' => 1,
+        'weight' => 1,
+        'is_active' => 1,
+      ],
+      [
+        'label' => 'Two',
+        'value' => 2,
+        'weight' => 2,
+        'is_active' => 1,
+      ],
+      [
+        'label' => 'Three',
+        'value' => 3,
+        'weight' => 3,
+        'is_active' => 1,
+      ],
+    ];
+
+    $params = array_merge([
+      'label' => 'Pick Digit',
+      'html_type' => 'Autocomplete-Select',
       'data_type' => 'String',
       'weight' => 2,
       'is_required' => 1,
